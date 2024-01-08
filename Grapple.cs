@@ -14,7 +14,7 @@ public class Grapple : MonoBehaviour
 
     public float minGrappleLength = 0.5f;
     public LineRenderer lineRenderer;
-    public float termRadialVel = 7.0f;
+    public float termRadialVel;
 
     public PlayerMvmt player;
 
@@ -50,7 +50,7 @@ public class Grapple : MonoBehaviour
 
                     Vector3 normal = (grappleHit.point - rb.position).normalized;
                     float orthoVelMag = Vector3.ProjectOnPlane(rb.velocity, normal).magnitude;
-                    termRadialVel = Mathf.Max(player.termGroundVel, orthoVelMag);
+                    termRadialVel = Mathf.Max(player.termGroundVel, orthoVelMag); // FIXME: this sucks, capping player vel is very antisource
                 }
             } else {
                 lineRenderer.enabled = false;
