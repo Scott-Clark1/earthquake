@@ -38,6 +38,7 @@ public class WeaponManagement : MonoBehaviour
                 weapon.gameObject.SetActive(false);
                 animator.SetBool(weapon.name + "_equipped", false);
             }
+            Debug.Log(weapon.name);
 
             i++;
         }

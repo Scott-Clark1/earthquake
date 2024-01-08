@@ -10,9 +10,13 @@ public class Grapple : MonoBehaviour
 
     private RaycastHit grappleHit;
     private float grappleLength;
-    public float grappleTol = 0.1f;
+    public float grappleVel = 0.1f;
 
+    public float minGrappleLength = 0.5f;
     public LineRenderer lineRenderer;
+    public float termRadialVel = 7.0f;
+
+    public PlayerMvmt player;
 
     void Start()
     {
@@ -29,7 +33,6 @@ public class Grapple : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("Grapplin!");
             if (!isGrappling) {
                 int layerMask = 1 << 10; // mask to only hit  "ground"
                 bool didHit = Physics.Raycast(
@@ -44,6 +47,10 @@ public class Grapple : MonoBehaviour
                     lineRenderer.enabled = true;
                     lineRenderer.startWidth = 0.1f;
                     lineRenderer.endWidth = 0.1f;
+
+                    Vector3 normal = (grappleHit.point - rb.position).normalized;
+                    float orthoVelMag = Vector3.ProjectOnPlane(rb.velocity, normal).magnitude;
+                    termRadialVel = Mathf.Max(player.termGroundVel, orthoVelMag);
                 }
             } else {
                 lineRenderer.enabled = false;
@@ -53,10 +60,29 @@ public class Grapple : MonoBehaviour
             // Debug.DrawRay(rb.position, (grappleHit.point - rb.position), Color.yellow);
             lineRenderer.SetPosition(0, grappleHit.point);
             lineRenderer.SetPosition(1, rb.position);
-            if ((rb.position - grappleHit.point).magnitude >= (grappleLength + grappleTol)) {
-                Vector3 normal = (rb.position - grappleHit.point).normalized;
-                rb.velocity = Vector3.ProjectOnPlane(rb.velocity, normal);
+
+            float dist = (rb.position - grappleHit.point).magnitude;
+            if (dist >= (grappleLength)) {
+                Vector3 normal = (grappleHit.point - rb.position).normalized;
+
+                float forwardVel = Vector3.Dot(rb.velocity, normal);
+                Vector3 velChange = Vector3.zero;
+
+                velChange = normal * grappleVel;
+
+                Vector3 orthoVel = Vector3.ProjectOnPlane(rb.velocity, normal);
+                float futVel = Mathf.Min(orthoVel.magnitude, termRadialVel);
+
+                rb.velocity = orthoVel.normalized * futVel + velChange;
             }
+
+            if (grappleLength > minGrappleLength) {
+                grappleLength -= grappleVel * Time.deltaTime;
+            } else {
+                isGrappling = false;
+                lineRenderer.enabled = false;
+            }
+
         }
     }
 }

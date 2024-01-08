@@ -32,7 +32,7 @@ public class PlayerMvmt : MonoBehaviour
     private float lastGrounding;
     private bool canJump = false;
 
-    private float xRotation;
+    private float xRotation = 0f;
 
     private Vector3 prevVelocity = Vector3.zero;
 
@@ -167,7 +167,7 @@ public class PlayerMvmt : MonoBehaviour
 
         rb.velocity = prevVelocity + velocityModifier + agrav;
 
-        // rb.AddForce(velocityModifier, ForceMode.VelocityChange);
+        rb.AddForce(velocityModifier + agrav, ForceMode.VelocityChange);
         if (canJump)
             rb.AddForce(jumpAdj, ForceMode.VelocityChange);
         if (jumpAdj.y > 0) {
@@ -185,13 +185,15 @@ public class PlayerMvmt : MonoBehaviour
         float xSensitivity = sensitivity;
         float ySensitivity = sensitivity;
         float dTime = Time.deltaTime;
-        float mouseX = Input.GetAxis("Mouse X") * xSensitivity * dTime;
-        float mouseY = Input.GetAxis("Mouse Y") * ySensitivity * dTime;
+        float y = Input.GetAxis("Mouse X") * xSensitivity * dTime;
+        float x = Input.GetAxis("Mouse Y") * ySensitivity * dTime;
 
-        xRotation -= mouseY;
+        // Vector3 rotateValue = new Vector3(x, y*-1, 0);
+        // cameraObj.transform.eulerAngles = transform.eulerAngles - rotateValue;
+        xRotation -= x;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         
         cameraObj.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-        transform.Rotate(Vector3.up * mouseX);
+        transform.Rotate(Vector3.up * y);
     }
 }

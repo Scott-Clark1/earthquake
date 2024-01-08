@@ -19,12 +19,19 @@ public class Gun : MonoBehaviour
 
 
     public ParticleSystem muzzleFlash;
+    public GameObject bulletImpact;
     // Start is called before the first frame update
 
     public Camera cameraObj;
+    public GameObject cameraHolder;
 
 
     public Animator animator;
+    
+    public float vertRecoil = 0.1f;
+    public float horizRecoil = 0.1f;
+    public float recoilCooldown = 0.2f;
+    public float recoilWarmup = 0.2f;
 
 
     private float timeToFire = 0f;
@@ -65,6 +72,7 @@ public class Gun : MonoBehaviour
             muzzleFlash.Play();
         }
         StartCoroutine(HandleShootAnim());
+        StartCoroutine(Recoil());
 
         RaycastHit hit;
         bool didHit = Physics.Raycast(
@@ -75,6 +83,11 @@ public class Gun : MonoBehaviour
             layerMask);
 
         if (didHit) {
+            if (bulletImpact != null) {
+                GameObject impact = Instantiate(bulletImpact, hit.point, Quaternion.LookRotation(hit.normal));
+                Destroy(impact, 2f);
+            }
+
             Debug.Log(hit.transform.name);
             if (hit.rigidbody != null)
                 hit.rigidbody.AddForce(-hit.normal * knockback);
@@ -88,15 +101,12 @@ public class Gun : MonoBehaviour
             currentAmmo--;
     }
 
+
     IEnumerator HandleShootAnim()
     {
-        // isShooting = true;
-
         animator.SetBool("Shooting", true);
         yield return new WaitForSeconds(1f / fireRate - 0.1f);
         animator.SetBool("Shooting", false);
-        yield return new WaitForSeconds(1f / fireRate - 0.1f);
-        // isShooting = false;
     }
 
     IEnumerator Reload()
@@ -109,5 +119,33 @@ public class Gun : MonoBehaviour
         yield return new WaitForSeconds(.125f);
         currentAmmo = maxAmmo;
         isReloading = false;
+    }
+
+    IEnumerator Recoil() {
+        float horizRecoilAdj = Random.Range(0.8f, 1.25f);
+        float vertRecoilAdj = Random.Range(0.5f, 2f);
+
+        float recoilSmoothness = 25f;
+
+
+        Vector3 recoil = new Vector3(-1*vertRecoil * vertRecoilAdj, horizRecoil * horizRecoilAdj, 0f);
+
+        float warmupFrames = Mathf.Ceil(recoilSmoothness * (recoilWarmup + 0.001f));
+        // cameraHolder.transform.eulerAngles = cameraHolder.transform.eulerAngles + recoil;
+        for(int i = 0; i < warmupFrames; i++)
+        {
+            yield return new WaitForSeconds(recoilWarmup / warmupFrames);
+            cameraHolder.transform.eulerAngles = cameraHolder.transform.eulerAngles + recoil / warmupFrames;
+        }
+
+        float cooldownFrames = Mathf.Ceil(recoilSmoothness * (recoilCooldown + 0.001f));
+
+
+        for(int i = 0; i < cooldownFrames; i++)
+        {
+            yield return new WaitForSeconds(recoilCooldown / cooldownFrames);
+            cameraHolder.transform.eulerAngles = cameraHolder.transform.eulerAngles - recoil / cooldownFrames;
+        }
+
     }
 }
